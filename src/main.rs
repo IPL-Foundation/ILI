@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::env;
 
+const ILI_PATH : &str = "C:\\ProgramData\\ILI";
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -63,11 +65,9 @@ Commands:
 }
 
 fn libs_dir() -> PathBuf {
-    dirs_home().join(".ipl/libs")
-}
-
-fn dirs_home() -> PathBuf {
-    env::var("HOME").map(PathBuf::from).unwrap_or_else(|_| PathBuf::from("."))
+    let path = PathBuf::from(ILI_PATH).join("libs");
+    println!("Using libs directory: {}", path.display());
+    return path;
 }
 
 fn install(name: &str, libs_dir: &Path) {
@@ -141,7 +141,7 @@ fn show_path(name: &str, libs_dir: &Path) {
 }
 
 fn ensure_registry() -> PathBuf {
-    let local = dirs_home().join(".ipl/ILI");
+    let local = PathBuf::from(ILI_PATH);
     let registry_file = local.join("registry.txt");
 
     if !local.exists() {
@@ -172,7 +172,7 @@ fn clone_registry(path: &Path) {
 }
 
 fn sync_registry() {
-    let path = dirs_home().join(".ipl/IPL");
+    let path = PathBuf::from(ILI_PATH);
     if path.exists() {
         println!("Pulling latest registry...");
         let _ = Command::new("git")

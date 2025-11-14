@@ -2,8 +2,17 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::env;
+use serde::Deserialize;
 
 const ILI_PATH : &str = "C:\\ProgramData\\ILI";
+
+#[derive(Deserialize, Debug)]
+struct Library {
+    name: String,
+    version: String,
+    entry: String,
+    dependencies: Vec<String>,
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -94,12 +103,30 @@ fn install(name: &str, libs_dir: &Path) {
         .status()
         .expect("Failed to run git clone");
 
-    if status.success() {
-        println!("Installed '{}'", name);
-    } else {
+    if !status.success() {
         eprintln!("Git clone failed for '{}'", name);
+        return;
+    }
+
+    // Validate Library.json
+    match load_library_json(&dest) {
+        Some(lib) => {
+            println!("Installed '{}'", lib.name);
+            println!("Version: {}", lib.version);
+            println!("Entry point: {}", lib.entry);
+
+            if !lib.dependencies.is_empty() {
+                println!("Dependencies: {:?}", lib.dependencies);
+            }
+        }
+        None => {
+            eprintln!("Invalid library: missing or malformed Library.json");
+            fs::remove_dir_all(&dest).unwrap();
+            return;
+        }
     }
 }
+
 
 fn update(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
@@ -138,6 +165,18 @@ fn show_path(name: &str, libs_dir: &Path) {
     } else {
         println!("'{}' not installed", name);
     }
+}
+
+fn load_library_json(path: &Path) -> Option<Library> {
+    let file = path.join("Library.json");
+    if !file.exists() {
+        eprintln!("Error: Library.json not found in {}", path.display());
+        return None;
+    }
+
+    let content = fs::read_to_string(&file).ok()?;
+    let parsed: Library = serde_json::from_str(&content).ok()?;
+    Some(parsed)
 }
 
 fn ensure_registry() -> PathBuf {

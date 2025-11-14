@@ -2,11 +2,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::env;
-use serde::Deserialize;
 
-const ILI_PATH : &str = "C:\\ProgramData\\ILI";
+const ILI_PATH : &str = "C:\\ProgramData\\ILI"; // Change as needed
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug)]
 struct Library {
     name: String,
     version: String,
@@ -14,16 +13,68 @@ struct Library {
     dependencies: Vec<String>,
 }
 
+fn load_library_json(path: &Path) -> Option<Library> {
+    let file = path.join("Library.json");
+    let raw = fs::read_to_string(&file).ok()?;
+
+    let mut name = String::new();
+    let mut version = String::new();
+    let mut entry = String::new();
+    let mut dependencies = Vec::new();
+
+    for line in raw.lines() {
+        let l = line.trim();
+
+        if l.starts_with("\"name\"") {
+            name = extract_string(l)?;
+        } else if l.starts_with("\"version\"") {
+            version = extract_string(l)?;
+        } else if l.starts_with("\"entry\"") {
+            entry = extract_string(l)?;
+        } else if l.starts_with("\"dependencies\"") {
+            dependencies = extract_array(l, &raw)?;
+        }
+    }
+
+    Some(Library { name, version, entry, dependencies })
+}
+
+fn extract_string(line: &str) -> Option<String> {
+    let start = line.find('"')?; // Where it starts
+    let rest = &line[start+1..];
+    let mid = rest.find('"')?; // End of key
+    let rest = &rest[mid+1..];
+    let value_start = rest.find('"')?; // Start of value
+    let rest = &rest[value_start+1..];
+    let value_end = rest.find('"')?; // End of value
+    Some(rest[..value_end].to_string()) // Extracted value
+}
+
+fn extract_array(_line: &str, full: &str) -> Option<Vec<String>> {
+    let start = full.find('[')?; // Start of array
+    let end = full.find(']')?; // End of array
+    let inside = &full[start+1..end]; // Inside the brackets
+    let mut out = Vec::new();
+    for part in inside.split(',') { // Split by commas
+        let t = part.trim();
+        if t.starts_with('"') && t.ends_with('"') { // Is a string
+            out.push(t[1..t.len()-1].to_string()); // Remove quotes
+        }
+    }
+    Some(out)
+}
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect(); // Get command-line arguments
     if args.len() < 2 {
         print_help();
         return;
     }
 
-    let command = args[1].as_str();
-    let libs_dir = libs_dir();
+    let command = args[1].as_str(); // First argument is command
+    let libs_dir = libs_dir(); // Get libs directory
 
+    // Match command
     match command {
         "install" => {
             if let Some(name) = args.get(2) {
@@ -54,12 +105,13 @@ fn main() {
             }
         }
         "sync" => {
-            sync_registry();
+            ensure_registry();
         }
         _ => print_help(),
     }
 }
 
+// Print help message
 fn print_help() {
     println!(
         "Usage: ili <command> [args]
@@ -72,16 +124,16 @@ Commands:
 "
     );
 }
-
+// Get the libs directory path
 fn libs_dir() -> PathBuf {
     let path = PathBuf::from(ILI_PATH).join("libs");
     println!("Using libs directory: {}", path.display());
     return path;
 }
-
+// Install a library by name
 fn install(name: &str, libs_dir: &Path) {
     let registry = ensure_registry();
-    let content = fs::read_to_string(&registry).unwrap_or_default();
+    let content = fs::read_to_string(&registry).unwrap_or_default(); // Read registry
 
     let repo = find_repo(&content, name);
     if repo.is_empty() {
@@ -95,9 +147,10 @@ fn install(name: &str, libs_dir: &Path) {
         return;
     }
 
-    fs::create_dir_all(&libs_dir).unwrap();
+    fs::create_dir_all(&libs_dir).unwrap(); // Ensure libs directory exists
     println!("Cloning {} -> {}", repo, dest.display());
 
+    // Clone the repository
     let status = Command::new("git")
         .args(["clone", &repo, dest.to_str().unwrap()])
         .status()
@@ -118,7 +171,7 @@ fn install(name: &str, libs_dir: &Path) {
             if !lib.dependencies.is_empty() {
                 println!("Dependencies: {:?}", lib.dependencies);
 
-                for dep in &lib.dependencies {
+                for dep in &lib.dependencies { // Install dependencies
                     install(dep, libs_dir);
                 }
             }
@@ -131,7 +184,7 @@ fn install(name: &str, libs_dir: &Path) {
     }
 }
 
-
+// Update an installed library
 fn update(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
     if !path.exists() {
@@ -140,6 +193,7 @@ fn update(name: &str, libs_dir: &Path) {
     }
 
     println!("Updating '{}'...", name);
+    // Pull latest changes
     let status = Command::new("git")
         .args(["-C", path.to_str().unwrap(), "pull"])
         .status()
@@ -158,6 +212,9 @@ fn update(name: &str, libs_dir: &Path) {
 
             if !lib.dependencies.is_empty() {
                 println!("Dependencies: {:?}", lib.dependencies);
+                for dep in &lib.dependencies { // Update dependencies
+                    update(dep, libs_dir);
+                }
             }
         }
         None => {
@@ -165,17 +222,17 @@ fn update(name: &str, libs_dir: &Path) {
         }
     }
 }
-
+// Remove an installed library
 fn remove(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
     if !path.exists() {
         eprintln!("'{}' not installed", name);
         return;
     }
-    fs::remove_dir_all(&path).unwrap();
+    fs::remove_dir_all(&path).unwrap(); // Remove the directory
     println!("Removed '{}'", name);
 }
-
+// Show installation path of a library
 fn show_path(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
     if path.exists() {
@@ -184,19 +241,7 @@ fn show_path(name: &str, libs_dir: &Path) {
         println!("'{}' not installed", name);
     }
 }
-
-fn load_library_json(path: &Path) -> Option<Library> {
-    let file = path.join("Library.json");
-    if !file.exists() {
-        eprintln!("Error: Library.json not found in {}", path.display());
-        return None;
-    }
-
-    let content = fs::read_to_string(&file).ok()?;
-    let parsed: Library = serde_json::from_str(&content).ok()?;
-    Some(parsed)
-}
-
+// Ensure the registry is present and up-to-date
 fn ensure_registry() -> PathBuf {
     let local = PathBuf::from(ILI_PATH);
     let registry_file = local.join("registry.txt");
@@ -214,7 +259,7 @@ fn ensure_registry() -> PathBuf {
 
     registry_file
 }
-
+// Clone the registry repository
 fn clone_registry(path: &Path) {
     let registry_repo = "https://github.com/I-had-a-bad-idea/ILI.git";
 
@@ -228,19 +273,7 @@ fn clone_registry(path: &Path) {
     }
 }
 
-fn sync_registry() {
-    let path = PathBuf::from(ILI_PATH);
-    if path.exists() {
-        println!("Pulling latest registry...");
-        let _ = Command::new("git")
-            .args(["-C", path.to_str().unwrap(), "pull"])
-            .status();
-    } else {
-        println!("No local registry found, cloning fresh...");
-        clone_registry(&path);
-    }
-}
-
+// Find repository URL for a given library name
 fn find_repo(content: &str, name: &str) -> String {
     for line in content.lines() {
         if let Some((n, url)) = line.split_once('=') {

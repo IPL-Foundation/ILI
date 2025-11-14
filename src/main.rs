@@ -117,6 +117,10 @@ fn install(name: &str, libs_dir: &Path) {
 
             if !lib.dependencies.is_empty() {
                 println!("Dependencies: {:?}", lib.dependencies);
+
+                for dep in &lib.dependencies {
+                    install(dep, libs_dir);
+                }
             }
         }
         None => {

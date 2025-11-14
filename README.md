@@ -1,6 +1,8 @@
 # ILI
 IPL library installer
 
-SET PATH=%PATH%;C:\ProgramData\ILI\target\release
+Installation:
 
-<!-- setx PATH "%PATH%;C:\ProgramData\ILI\target\release" -->
+git clone https://github.com/I-had-a-bad-idea/ILI.git C:\ProgramData\ILI
+
+cargo install --path C:\ProgramData\ILI

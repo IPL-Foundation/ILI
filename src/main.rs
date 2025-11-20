@@ -281,7 +281,7 @@ fn ensure_registry() -> PathBuf {
             .args(["-C", local.to_str().unwrap(), "pull"])
             .status();
     }
-    print!("Updating ili installation...")
+    print!("Updating ili installation...");
     let _ = Command::new("cargo")
         .args(&["install", "--path", r"C:\ProgramData\ILI"])
         .status()

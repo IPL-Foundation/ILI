@@ -87,7 +87,7 @@ fn main() {
             if let Some(name) = args.get(2) {
                 update(name, &libs_dir);
             } else {
-                eprintln!("Usage: ili update <name>");
+                update_all(&libs_dir);
             }
         }
         "remove" => {
@@ -117,7 +117,7 @@ fn print_help() {
         "Usage: ili <command> [args]
 Commands:
   install <name>   Install a library from the registry
-  update <name>    Update an installed library
+  update (<name>)  Update all libraries, optionally pass a single library
   remove <name>    Remove a library
   where <name>     Show installation path
   sync             Update local copy of registry
@@ -222,6 +222,31 @@ fn update(name: &str, libs_dir: &Path) {
         }
     }
 }
+
+fn update_all(libs_dir: &Path) {
+    let entries = match fs::read_dir(libs_dir) {
+        Ok(e) => e,
+        Err(_) => {
+            eprintln!("Failed to read libraries directory: {:?}", libs_dir);
+            return;
+        }
+    };
+
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+
+        if path.is_dir() {
+            // Check for a Library.json to confirm it's a library folder
+            if path.join("Library.json").exists() {
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    update(name, libs_dir);
+                }
+            }
+        }
+    }
+}
+
 // Remove an installed library
 fn remove(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);

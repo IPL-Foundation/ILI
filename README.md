@@ -22,9 +22,9 @@ Call commands via `ili command args`
 Install a library from the registry.
 Downloads the library, extracts it into the IPL library directory, and install dependencies.
 
-### `update <name>`
+### `update (<name>)`
 
-Update an installed library and its dependencies.
+Update an installed library and its dependencies, if name is given. Else updates all libraries.
 
 ### `remove <name>`
 

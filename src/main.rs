@@ -104,6 +104,9 @@ fn main() {
                 eprintln!("Usage: ili where <name>");
             }
         }
+        "list" => {
+            list(&libs_dir);
+        }
         "sync" => {
             ensure_registry();
         }
@@ -120,10 +123,35 @@ Commands:
   update (<name>)  Update all libraries, optionally pass a single library
   remove <name>    Remove a library
   where <name>     Show installation path
-  sync             Update local copy of registry
+  list             List installed libraries
+  sync             Update ILI and its registry
 "
     );
 }
+
+fn list(libs_dir: &Path) {
+    let entries = read_library_dir(libs_dir);
+
+    if entries.is_empty() {
+        println!("No libraries installed.");
+        return;
+    }
+
+    println!("Installed libraries:");
+    for entry in &entries {
+        if let Some(name) = entry.file_name().and_then(|n| n.to_str()) {
+            match load_library_json(entry) {
+                Some(lib) => {
+                    println!("- {} (version {})", lib.name, lib.version);
+                }
+                None => {
+                    println!("- {} (invalid Library.json)", name);
+                }
+            }
+        }
+    }
+}
+
 // Get the libs directory path
 fn libs_dir() -> PathBuf {
     let path = PathBuf::from(ILI_PATH).join("libs");

@@ -32,6 +32,14 @@ Remove a previously installed library, including its metadata and local files.
 
 Print the installation path of a library.
 
+### `list`
+
+Lists all installed libraries
+
+### `reinstall <name>`
+
+Removes and freshly installs a library
+
 ### `sync`
 
 Pull the latest registry index so `ili` knows about new/updated libraries.

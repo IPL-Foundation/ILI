@@ -104,6 +104,17 @@ fn main() {
                 eprintln!("Usage: ili where <name>");
             }
         }
+        "list" => {
+            list(&libs_dir);
+        }
+        "reinstall" => {
+            if let Some(name) = args.get(2) {
+                reinstall(name, &libs_dir);
+            }
+            else {
+                eprintln!("Usage: ili reinstall <name>")
+            }
+        }
         "sync" => {
             ensure_registry();
         }
@@ -120,10 +131,41 @@ Commands:
   update (<name>)  Update all libraries, optionally pass a single library
   remove <name>    Remove a library
   where <name>     Show installation path
-  sync             Update local copy of registry
+  list             List installed libraries
+  reinstall <name> Removes and freshly installs a library
+  sync             Update ILI and its registry
 "
     );
 }
+
+fn reinstall(name: &str, libs_dir: &Path) {
+    remove(name, libs_dir);
+    install(name, libs_dir);
+}
+
+fn list(libs_dir: &Path) {
+    let entries = read_library_dir(libs_dir);
+
+    if entries.is_empty() {
+        println!("No libraries installed.");
+        return;
+    }
+
+    println!("Installed libraries:");
+    for entry in &entries {
+        if let Some(name) = entry.file_name().and_then(|n| n.to_str()) {
+            match load_library_json(entry) {
+                Some(lib) => {
+                    println!("- {} (version {})", lib.name, lib.version);
+                }
+                None => {
+                    println!("- {} (invalid Library.json)", name);
+                }
+            }
+        }
+    }
+}
+
 // Get the libs directory path
 fn libs_dir() -> PathBuf {
     let path = PathBuf::from(ILI_PATH).join("libs");
@@ -132,6 +174,7 @@ fn libs_dir() -> PathBuf {
 }
 // Install a library by name
 fn install(name: &str, libs_dir: &Path) {
+    print!("Installing {}...", name);
     let registry = ensure_registry();
     let content = fs::read_to_string(&registry).unwrap_or_default(); // Read registry
 
@@ -257,6 +300,7 @@ fn update_all(libs_dir: &Path) {
 
 // Remove an installed library
 fn remove(name: &str, libs_dir: &Path) {
+    print!("Removing {}...", name);
     let path = libs_dir.join(name);
     if !path.exists() {
         eprintln!("'{}' not installed", name);

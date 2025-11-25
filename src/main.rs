@@ -222,31 +222,36 @@ fn update(name: &str, libs_dir: &Path) {
         }
     }
 }
-fn read_library_dir(libs_dir: &Path) -> Result<ReadDir> {
+fn read_library_dir(libs_dir: &Path)  -> Vec<PathBuf> {
     let entries = match fs::read_dir(libs_dir) {
         Ok(e) => e,
         Err(_) => {
             eprintln!("Failed to read libraries directory: {:?}", libs_dir);
-            return;
+            return vec![]; // Return empty list
         }
     };
-    return entries
+    let mut libraries = vec![];
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+        if path.is_dir() && path.join("Library.json").exists() {
+            // Valid library directory
+            libraries.push(path);
+        }
+    }
+    return libraries;
+}
     
 fn update_all(libs_dir: &Path) {
     let entries = read_library_dir(libs_dir);
 
-    for entry in entries {
-        let Ok(entry) = entry else { continue };
-        let path = entry.path();
-
-        if path.is_dir() {
-            // Check for a Library.json to confirm it's a library folder
-            if path.join("Library.json").exists() {
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    update(name, libs_dir);
-                }
-            }
+    for entry in &entries {
+        if let Some(name) = entry.file_name().and_then(|n| n.to_str()) {
+            update(name, libs_dir);
         }
+    }
+    if entries.is_empty() {
+        println!("No libraries installed to update.");
     }
 }
 

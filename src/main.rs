@@ -2,7 +2,6 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use directories::BaseDirs;
 
 #[derive(Debug)]
 struct Library {
@@ -13,10 +12,20 @@ struct Library {
 }
 
 fn get_ili_path() -> PathBuf {
-    BaseDirs::new()
-        .expect("Could not locate system directory")
-        .data_dir()
-        .join("ILI")
+    #[cfg(target_os = "windows")]
+    {
+        PathBuf::from(std::env::var("PROGRAMDATA").unwrap()).join("ILI")
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        PathBuf::from("/usr/local/share/ILI")
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        PathBuf::from("/Library/Application Support/ILI")
+    }
 }
 
 fn load_library_json(path: &Path) -> Option<Library> {

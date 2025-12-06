@@ -2,8 +2,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-
-const ILI_PATH: &str = "C:\\ProgramData\\ILI"; // Change as needed
+use directories::BaseDirs;
 
 #[derive(Debug)]
 struct Library {
@@ -11,6 +10,13 @@ struct Library {
     version: String,
     entry: String,
     dependencies: Vec<String>,
+}
+
+fn get_ili_path() -> PathBuf {
+    BaseDirs::new()
+        .expect("Could not locate system directory")
+        .data_dir()
+        .join("ILI")
 }
 
 fn load_library_json(path: &Path) -> Option<Library> {
@@ -174,7 +180,7 @@ fn list(libs_dir: &Path) {
 
 // Get the libs directory path
 fn libs_dir() -> PathBuf {
-    PathBuf::from(ILI_PATH).join("libs")
+    PathBuf::from(get_ili_path()).join("libs")
 }
 // Install a library by name
 fn install(name: &str, libs_dir: &Path) {
@@ -325,7 +331,7 @@ fn show_path(name: &str, libs_dir: &Path) {
 }
 // Ensure the registry is present and up-to-date
 fn ensure_registry() -> PathBuf {
-    let local = PathBuf::from(ILI_PATH);
+    let local = PathBuf::from(get_ili_path());
     let registry_file = local.join("registry.txt");
 
     if !local.exists() {

@@ -18,19 +18,19 @@ const YELLOW: &str = "\x1b[33m";
 const BLUE: &str = "\x1b[34m";
 
 fn print_info(msg: &str) {
-    println!("{BLUE}{msg}{RESET}");
+    println!("{}{}{}", BLUE, msg, RESET);
 }
 
 fn print_success(msg: &str) {
-    println!("{GREEN}{msg}{RESET}");
+    println!("{}{}{}", GREEN, msg, RESET);
 }
 
 fn print_warn(msg: &str) {
-    println!("{YELLOW}{msg}{RESET}");
+    println!("{}{}{}", YELLOW, msg, RESET);
 }
 
 fn print_error(msg: &str) {
-    eprint!("{RED}{msg}{RESET}");
+    println!("{}{}{}", RED, msg, RESET);
 }
 
 fn get_ili_path() -> PathBuf {

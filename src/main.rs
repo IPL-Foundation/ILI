@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use colored::Colorize;
 
 #[derive(Debug)]
 struct Library {
@@ -11,26 +12,20 @@ struct Library {
     dependencies: Vec<String>,
 }
 
-const RESET: &str = "\x1b[0m";
-const RED: &str = "\x1b[31m";
-const GREEN: &str = "\x1b[32m";
-const YELLOW: &str = "\x1b[33m";
-const BLUE: &str = "\x1b[34m";
-
 fn print_info(msg: &str) {
-    println!("{}{}{}", BLUE, msg, RESET);
+    println!("{}", msg.blue());
 }
 
 fn print_success(msg: &str) {
-    println!("{}{}{}", GREEN, msg, RESET);
+    println!("{}", msg.green());
 }
 
 fn print_warn(msg: &str) {
-    println!("{}{}{}", YELLOW, msg, RESET);
+    println!("{}", msg.yellow());
 }
 
 fn print_error(msg: &str) {
-    println!("{}{}{}", RED, msg, RESET);
+    println!("{}", msg.red());
 }
 
 fn get_ili_path() -> PathBuf {

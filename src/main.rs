@@ -104,7 +104,7 @@ fn extract_array(_line: &str, full: &str) -> Option<Vec<String>> {
 }
 
 fn main() {
-    force_colour();
+    force_colour().unwrap();
     let args: Vec<String> = env::args().collect(); // Get command-line arguments
     if args.len() < 2 {
         print_help();

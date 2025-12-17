@@ -105,7 +105,7 @@ fn extract_array(_line: &str, full: &str) -> Option<Vec<String>> {
 }
 
 fn main() {
-    colored::control::set_virtual_terminal(true)
+    colored::control::set_virtual_terminal(true);
     // colored::control::set_override(true);
     let args: Vec<String> = env::args().collect(); // Get command-line arguments
     if args.len() < 2 {

@@ -124,7 +124,7 @@ fn main() {
             if let Some(name) = args.get(2) {
                 install(name, &libs_dir);
             } else {
-                eprintln!("Usage: ili install <name>");
+                print_error(&format!("Usage: ili install <name)>"));
             }
         }
         "update" => {
@@ -138,14 +138,14 @@ fn main() {
             if let Some(name) = args.get(2) {
                 remove(name, &libs_dir);
             } else {
-                eprintln!("Usage: ili remove <name>");
+                print_error(&format!("Usage: ili remove <name)>"));
             }
         }
         "where" => {
             if let Some(name) = args.get(2) {
                 show_path(name, &libs_dir);
             } else {
-                eprintln!("Usage: ili where <name>");
+                print_error(&format!("Usage: ili where <name)>"));
             }
         }
         "list" => {
@@ -155,7 +155,7 @@ fn main() {
             if let Some(name) = args.get(2) {
                 reinstall(name, &libs_dir);
             } else {
-                eprintln!("Usage: ili reinstall <name>")
+                print_error(&format!("Usage: ili reinstall <name)>"))
             }
         }
         "sync" => {
@@ -221,7 +221,7 @@ fn install(name: &str, libs_dir: &Path) {
 
     let repo = find_repo(&content, name);
     if repo.is_empty() {
-        eprintln!("No entry found for '{}'", name);
+        print_error(&format!("No entry found for '{}'", name));
         return;
     }
 
@@ -241,7 +241,7 @@ fn install(name: &str, libs_dir: &Path) {
         .expect("Failed to run git clone");
 
     if !status.success() {
-        eprintln!("Git clone failed for '{}'", name);
+        print_error(&format!("Git clone failed for '{}'", name));
         return;
     }
 
@@ -262,7 +262,7 @@ fn install(name: &str, libs_dir: &Path) {
             }
         }
         None => {
-            eprintln!("Invalid library: missing or malformed Library.json");
+            print_error(&format!("Invalid library: missing or malformed Library.json)"));
             fs::remove_dir_all(&dest).unwrap();
         }
     }
@@ -272,7 +272,7 @@ fn install(name: &str, libs_dir: &Path) {
 fn update(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
     if !path.exists() {
-        eprintln!("'{}' is not installed", name);
+        print_error(&format!("'{}' is not installed", name));
         return;
     }
 
@@ -284,7 +284,7 @@ fn update(name: &str, libs_dir: &Path) {
         .expect("Failed to run git pull");
 
     if !status.success() {
-        eprintln!("Update failed for '{}'", name);
+        print_error(&format!("Update failed for '{}'", name));
         return;
     }
 
@@ -303,7 +303,7 @@ fn update(name: &str, libs_dir: &Path) {
             }
         }
         None => {
-            eprintln!("Warning: '{}' updated but Library.json is invalid!", name);
+            print_error(&format!("Warning: '{}' updated but Library.json is invalid!", name));
         }
     }
 }
@@ -311,7 +311,7 @@ fn read_library_dir(libs_dir: &Path) -> Vec<PathBuf> {
     let entries = match fs::read_dir(libs_dir) {
         Ok(e) => e,
         Err(_) => {
-            eprintln!("Failed to read libraries directory: {:?}", libs_dir);
+            print_error(&format!("Failed to read libraries directory: {:?}", libs_dir));
             return vec![]; // Return empty list
         }
     };
@@ -345,7 +345,7 @@ fn remove(name: &str, libs_dir: &Path) {
     print!("Removing {}...", name);
     let path = libs_dir.join(name);
     if !path.exists() {
-        eprintln!("'{}' not installed", name);
+        print_error(&format!("'{}' not installed", name));
         return;
     }
     fs::remove_dir_all(&path).unwrap(); // Remove the directory
@@ -394,7 +394,7 @@ fn clone_registry(path: &Path) {
         .expect("Failed to clone registry repo");
 
     if !status.success() {
-        eprintln!("Failed to clone registry repository");
+        print_error(&format!("Failed to clone registry repository)"));
     }
 }
 

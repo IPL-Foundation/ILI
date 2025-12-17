@@ -167,7 +167,7 @@ fn main() {
 
 // Print help message
 fn print_help() {
-    println!(
+    print_info(
         "Usage: ili <command> [args]
 Commands:
   install <name>   Install a library from the registry
@@ -190,19 +190,19 @@ fn list(libs_dir: &Path) {
     let entries = read_library_dir(libs_dir);
 
     if entries.is_empty() {
-        println!("No libraries installed.");
+        print_warn("No libraries installed.");
         return;
     }
 
-    println!("Installed libraries:");
+    print_info("Installed libraries:");
     for entry in &entries {
         if let Some(name) = entry.file_name().and_then(|n| n.to_str()) {
             match load_library_json(entry) {
                 Some(lib) => {
-                    println!("- {} (version {})", lib.name, lib.version);
+                    print_info(&format!("- {} (version {})", lib.name, lib.version));
                 }
                 None => {
-                    println!("- {} (invalid Library.json)", name);
+                    print_warn(&format!("- {} (invalid Library.json)", name));
                 }
             }
         }
@@ -227,12 +227,12 @@ fn install(name: &str, libs_dir: &Path) {
 
     let dest = libs_dir.join(name);
     if dest.exists() {
-        println!("'{}' already installed at {}", name, dest.display());
+        print_warn(&format!("'{}' already installed at {}", name, dest.display()));
         return;
     }
 
     fs::create_dir_all(&libs_dir).unwrap(); // Ensure libs directory exists
-    println!("Cloning {} -> {}", repo, dest.display());
+    print_info(&format!("Cloning {} -> {}", repo, dest.display()));
 
     // Clone the repository
     let status = Command::new("git")
@@ -248,12 +248,12 @@ fn install(name: &str, libs_dir: &Path) {
     // Validate Library.json
     match load_library_json(&dest) {
         Some(lib) => {
-            println!("Installed '{}'", lib.name);
-            println!("Version: {}", lib.version);
-            println!("Entry point: {}", lib.entry);
+            print_success(&format!("Installed '{}'", lib.name));
+            print_success(&format!("Version: {}", lib.version));
+            print_success(&format!("Entry point: {}", lib.entry));
 
             if !lib.dependencies.is_empty() {
-                println!("Dependencies: {:?}", lib.dependencies);
+                print_info(&format!("Dependencies: {:?}", lib.dependencies));
 
                 for dep in &lib.dependencies {
                     // Install dependencies
@@ -276,7 +276,7 @@ fn update(name: &str, libs_dir: &Path) {
         return;
     }
 
-    println!("Updating '{}'...", name);
+    print_info(&format!("Updating '{}'...", name));
     // Pull latest changes
     let status = Command::new("git")
         .args(["-C", path.to_str().unwrap(), "pull"])
@@ -291,11 +291,11 @@ fn update(name: &str, libs_dir: &Path) {
     // Reload Library.json
     match load_library_json(&path) {
         Some(lib) => {
-            println!("Updated '{}'", lib.name);
-            println!("Version: {}", lib.version);
+            print_success(&format!("Updated '{}'", lib.name));
+            print_success(&format!("Version: {}", lib.version));
 
             if !lib.dependencies.is_empty() {
-                println!("Dependencies: {:?}", lib.dependencies);
+                print_info(&format!("Dependencies: {:?}", lib.dependencies));
                 for dep in &lib.dependencies {
                     // Update dependencies
                     update(dep, libs_dir);
@@ -336,7 +336,7 @@ fn update_all(libs_dir: &Path) {
         }
     }
     if entries.is_empty() {
-        println!("No libraries installed to update.");
+        print_warn("No libraries installed to update.");
     }
 }
 
@@ -349,15 +349,15 @@ fn remove(name: &str, libs_dir: &Path) {
         return;
     }
     fs::remove_dir_all(&path).unwrap(); // Remove the directory
-    println!("Removed '{}'", name);
+    print_success(&format!("Removed '{}'", name));
 }
 // Show installation path of a library
 fn show_path(name: &str, libs_dir: &Path) {
     let path = libs_dir.join(name);
     if path.exists() {
-        println!("'{}' installed at {}", name, path.display());
+        print_info(&format!("'{}' installed at {}", name, path.display()));
     } else {
-        println!("'{}' not installed", name);
+        print_warn(&format!("'{}' not installed", name));
     }
 }
 // Ensure the registry is present and up-to-date
@@ -366,16 +366,16 @@ fn ensure_registry() -> PathBuf {
     let registry_file = local.join("registry.txt");
 
     if !local.exists() {
-        println!("Cloning registry...");
+        print_info("Cloning registry...");
         clone_registry(&local);
     } else {
         // If registry exists, make sure it's fresh
-        println!("Updating local registry...");
+        print_info("Updating local registry...");
         let _ = Command::new("git")
             .args(["-C", local.to_str().unwrap(), "pull"])
             .status();
     }
-    print!("Updating ili installation...");
+    print_info("Updating ili installation...");
     let _ = Command::new("powershell")
         .arg("-Command")
         .arg("Start-Process cargo -ArgumentList 'install --path C:\\ProgramData\\ILI' -Verb runAs")

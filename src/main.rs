@@ -13,19 +13,19 @@ struct Library {
 }
 
 fn print_info(msg: &str) {
-    blue_ln!("{}", msg)
+    println!("\x1b[34m{}\x1b[0m", msg); // blue
 }
 
 fn print_success(msg: &str) {
-    green_ln!("{}", msg);
+    println!("\x1b[32m{}\x1b[0m", msg); // green
 }
 
 fn print_warn(msg: &str) {
-    yellow_ln!("{}", msg);
+    println!("\x1b[33m{}\x1b[0m", msg); // yellow
 }
 
 fn print_error(msg: &str) {
-    red_ln!("{}", msg);
+    println!("\x1b[31m{}\x1b[0m", msg); // red
 }
 
 fn get_ili_path() -> PathBuf {

@@ -182,7 +182,8 @@ Commands:
   where <name>     Show installation path
   list             List installed libraries
   reinstall <name> Removes and freshly installs a library
-  sync             Update ILI and its registry
+  sync             Update the ILI registry
+  update-ili       Update the ILI installation
 "
     );
 }
@@ -389,9 +390,9 @@ fn update_installation() {
     ensure_registry();
     let ili_path = get_ili_path();
 
-    let status = Command::new("cargo")
-        .args(["install", "--path"])
-        .arg(&ili_path)
+    // Launch cargo install in a separate process
+    let status = Command::new("cmd")
+        .args(&["/C", &format!("cargo install --path {}", ili_path.display())])
         .status();
 
     if let Err(e) = status {

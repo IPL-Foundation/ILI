@@ -65,7 +65,7 @@ ILI expects the registry to contain entries describing libraries (name, version,
 
    * `name`
    * `version`
-   * `entry` (the main IPL file)
+   * `entry` (the main IPL file) (use forward slashes "/" for cross-OS)
    * `dependencies` (list of all dependencies to install)
 
 3. **Add it to the registry**

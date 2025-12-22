@@ -365,7 +365,7 @@ fn show_path(name: &str, libs_dir: &Path) {
 }
 // Ensure the registry is present and up-to-date
 fn ensure_registry() -> PathBuf {
-    let local = PathBuf::from(get_ili_path());
+    let local = get_ili_path();
     let registry_file = local.join("registry.txt");
 
     if !local.exists() {
@@ -378,12 +378,12 @@ fn ensure_registry() -> PathBuf {
             .args(["-C", local.to_str().unwrap(), "pull"])
             .status();
     }
-    print_info("Updating ili installation...");
-    let _ = Command::new("powershell")
-        .arg("-Command")
-        .arg("Start-Process cargo -ArgumentList 'install --path C:\\ProgramData\\ILI' -Verb runAs")
-        .spawn()
-        .unwrap();
+    // print_info("Updating ili installation...");
+    // let _ = Command::new("powershell")
+    //     .arg("-Command")
+    //     .arg("Start-Process cargo -ArgumentList 'install --path C:\\ProgramData\\ILI' -Verb runAs")
+    //     .spawn()
+    //     .unwrap();
 
     registry_file
 }

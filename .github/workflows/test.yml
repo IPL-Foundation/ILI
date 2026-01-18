@@ -47,4 +47,11 @@ jobs:
     - name: Install test library
       run: ili install examplelib
 
-  
+    - name: Install registry
+      run: ili sync
+
+    - name: Reinstall test library
+      run: ili reinstall examplelib
+
+    - name: Remove test library
+      run: ili remove examplelib

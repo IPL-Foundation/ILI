@@ -39,6 +39,10 @@ jobs:
     - name: Install ILI
       run: |
         cargo run update-ili
+
+    - name: Install ILI from ILI_PATH
+      run: |
+        cargo install --path "$ILI_PATH"
     
     - name: Install test library
       run: ili install examplelib

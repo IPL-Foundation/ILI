@@ -1,0 +1,46 @@
+name: ILI Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Rust
+      uses: moonrepo/setup-rust@v1
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+    
+    - name: Define ILI_PATH
+      run: |
+        echo "ILI_PATH=$HOME/ILI" >> $GITHUB_ENV
+
+    - name: Build
+      run: cargo build --release
+
+    - name: Install ILI
+      run: |
+        cargo run update-ili
+    
+    - name: Install test library
+      run: ili install examplelib
+
+  
